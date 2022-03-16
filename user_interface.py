@@ -86,6 +86,7 @@ def main():
         if sign_on == 2:
             login_window.close()
             create_account()
+        #TODO: Create UI for music library, write a function to access/interact with it, and call that function if sign_on == 1
     elif event == "Create Account":
         login_window.close()
         create_account()
