@@ -7,7 +7,69 @@ Written by Jake Kenny
 
 import PySimpleGUI as sg
 import sys
-#import psycopg2
+import psycopg2 as pg
+"""connect to pg4admin database  """
+con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicDB")
+
+cur = con.cursor()
+"""creates the tables with attributes and constraints  """
+create_song = '''CREATE TABLE IF NOT EXISTS song (
+                    songID  int PRIMARY KEY,
+                    name    varchar(40) NOT NULL,
+                    Title   varchar(40) NOT NULL,
+                    ArtistID    int,
+                    runTimeSeconds  int, 
+                    genres  varchar(20), 
+                    artistName  varchar(20) NOT NULL 
+
+                    )'''
+create_users = ''' CREATE TABLE IF NOT EXISTS Users (
+                    UserID  int PRIMARY KEY,
+                    fname   varchar(20) NOT NULL, 
+                    lname   varchar(20) NOT NULL, 
+                    emailAddr varchar(40) NOT NULL, 
+                    userPass    varchar(50) NOT NULL
+
+
+                    )'''
+create_artist = ''' CREATE TABLE IF NOT EXISTS Artist (
+                    ArtistID  int PRIMARY KEY,
+                    fname   varchar(20) NOT NULL, 
+                    lname   varchar(20) NOT NULL
+                    
+                    )'''
+
+create_album = ''' CREATE TABLE IF NOT EXISTS Album (
+                    AlbumID  int PRIMARY KEY,
+                    albumName   varchar(40) NOT NULL, 
+                    artistName   varchar(20) NOT NULL, 
+                    releaseYear     int, 
+                    genres      varchar(20)
+                    
+                    )'''
+create_rating = '''CREATE TABLE IF NOT EXISTS rating (
+                    avgRating   int,
+                    songID      int PRIMARY KEY
+                    )'''
+
+create_favorites = ''' CREATE TABLE IF NOT EXISTS favorites (
+                    userID  int,
+                    listID  int PRIMARY KEY
+                   )'''
+
+"""executes the sql commands for creating the tables  """
+cur.execute(create_song)
+cur.execute(create_users)
+cur.execute(create_artist)
+cur.execute(create_album)
+cur.execute(create_rating)
+cur.execute(create_favorites)
+        
+""" commits them so they show up on database"""
+con.commit()
+""" close connections""" 
+cur.close()
+con.close()
 
 #Temp login dictionary. Will be replaced with a SQL database
 accounts = {'Admin':'123456'}
