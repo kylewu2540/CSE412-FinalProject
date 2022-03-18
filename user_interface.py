@@ -64,7 +64,6 @@ def create_library_UI():
             [sg.Tab('Favorites', favorites_layout)]
             ])]
         ]
-    #I think this line is the source of the error; tabgrp needs to be a layout 
     library_UI_window = sg.Window("CSE 412 Project", tabgrp).finalize()
     library_UI_window.maximize()
     return library_UI_window
