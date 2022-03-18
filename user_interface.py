@@ -6,70 +6,9 @@ Written by Jake Kenny
 """
 
 import PySimpleGUI as sg
+#NOTE: may replace PySimpleGUI with PySimpleSQL. Best case scenario we don't even need to use psycopg2
 import sys
-import psycopg2 as pg
-"""connect to pg4admin database  """
-con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicDB")
-
-cur = con.cursor()
-"""creates the tables with attributes and constraints  """
-create_song = '''CREATE TABLE IF NOT EXISTS song (
-                    songID  int PRIMARY KEY,
-                    name    varchar(40) NOT NULL,
-                    Title   varchar(40) NOT NULL,
-                    ArtistID    int,
-                    runTimeSeconds  int, 
-                    genres  varchar(20), 
-                    artistName  varchar(20) NOT NULL 
-
-                    )'''
-create_users = ''' CREATE TABLE IF NOT EXISTS Users (
-                    UserID  int PRIMARY KEY,
-                    fname   varchar(20) NOT NULL, 
-                    lname   varchar(20) NOT NULL, 
-                    emailAddr varchar(40) NOT NULL, 
-                    userPass    varchar(50) NOT NULL
-
-
-                    )'''
-create_artist = ''' CREATE TABLE IF NOT EXISTS Artist (
-                    ArtistID  int PRIMARY KEY,
-                    fname   varchar(20) NOT NULL, 
-                    lname   varchar(20) NOT NULL
-                    
-                    )'''
-
-create_album = ''' CREATE TABLE IF NOT EXISTS Album (
-                    AlbumID  int PRIMARY KEY,
-                    albumName   varchar(40) NOT NULL, 
-                    artistName   varchar(20) NOT NULL, 
-                    releaseYear     int, 
-                    genres      varchar(20)
-                    
-                    )'''
-create_rating = '''CREATE TABLE IF NOT EXISTS rating (
-                    avgRating   int,
-                    songID      int PRIMARY KEY
-                    )'''
-
-create_favorites = ''' CREATE TABLE IF NOT EXISTS favorites (
-                    userID  int,
-                    listID  int PRIMARY KEY
-                   )'''
-
-"""executes the sql commands for creating the tables  """
-cur.execute(create_song)
-cur.execute(create_users)
-cur.execute(create_artist)
-cur.execute(create_album)
-cur.execute(create_rating)
-cur.execute(create_favorites)
-        
-""" commits them so they show up on database"""
-con.commit()
-""" close connections""" 
-cur.close()
-con.close()
+#import psycopg2
 
 #Temp login dictionary. Will be replaced with a SQL database
 accounts = {'Admin':'123456'}
@@ -95,12 +34,38 @@ def create_incorrect_login_window():
 
 def create_create_account_window():
     create_account_layout = [
+       [sg.Text("Please enter your new username and password")],
        [sg.Text("Username: "), sg.InputText()],
        [sg.Text("Password: "), sg.InputText()],
        [sg.Button("Create Account")]
        ] 
     create_account_window = sg.Window("CSE 412 Project", create_account_layout, margins = (100, 50))
     return create_account_window
+
+#The music library UI is composed of the library and favorites tab
+#These two tabs are very similar; the only difference is that the table in favorites is a subset of the table in library
+def create_library_UI():
+    """
+    TODO:
+        1. Format the tables to fit the screen
+        2. Set the 'values' parameter equal to the SQL database
+    """
+    library_layout = [
+        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        ]
+    favorites_layout = [
+        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        ]
+    tabgrp = [
+        [sg.TabGroup([
+            [sg.Tab('Library', library_layout)],
+            [sg.Tab('Favorites', favorites_layout)]
+            ])]
+        ]
+    #I think this line is the source of the error; tabgrp needs to be a layout 
+    library_UI_window = sg.Window("CSE 412 Project", tabgrp).finalize()
+    library_UI_window.maximize()
+    return library_UI_window
 
 #Returns 0 on an unsuccessful login, 1 on a successful login, and 2 if the user wants to create an account
 #Parameters: the provided username, the provided password, the login window, the login window's event handler
@@ -129,9 +94,14 @@ def create_account():
     event, values = create_account_window.read()
     if event == "Create Account":
         #TODO: Replace the following line of code with an SQL command to add the username and password to the database
+        #TODO: Make sure each account has a unique username, otherwise creating one account will reset the password of another
         accounts[values[0]] = values[1]
         create_account_window.close()
+    elif event == sg.WIN_CLOSED:
+        sys.exit()
     main()
+    
+
 
 def main():
     login_window = create_login_window()
@@ -145,10 +115,13 @@ def main():
             login_window = create_login_window()
             event, values = login_window.read()
             sign_on = login(values[0], values[1], login_window, event)
-        if sign_on == 2:
+        if sign_on == 1:
             login_window.close()
-            create_account()
-        #TODO: Create UI for music library, write a function to access/interact with it, and call that function if sign_on == 1
+            library_window = create_library_UI()
+            event, values = library_window.read()
+        elif sign_on == 2:
+            login_window.close()
+            create_account()    
     elif event == "Create Account":
         login_window.close()
         create_account()
