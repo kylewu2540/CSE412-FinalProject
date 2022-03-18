@@ -101,6 +101,30 @@ def create_create_account_window():
        ] 
     create_account_window = sg.Window("CSE 412 Project", create_account_layout, margins = (100, 50))
     return create_account_window
+  
+#The music library UI is composed of the library and favorites tab
+#These two tabs are very similar; the only difference is that the table in favorites is a subset of the table in library
+def create_library_UI():
+    """
+    TODO:
+        1. Format the tables to fit the screen
+        2. Set the 'values' parameter equal to the SQL database
+    """
+    library_layout = [
+        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        ]
+    favorites_layout = [
+        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        ]
+    tabgrp = [
+        [sg.TabGroup([
+            [sg.Tab('Library', library_layout)],
+            [sg.Tab('Favorites', favorites_layout)]
+            ])]
+        ] 
+    library_UI_window = sg.Window("CSE 412 Project", tabgrp).finalize()
+    library_UI_window.maximize()
+    return library_UI_window
 
 #Returns 0 on an unsuccessful login, 1 on a successful login, and 2 if the user wants to create an account
 #Parameters: the provided username, the provided password, the login window, the login window's event handler
@@ -145,10 +169,13 @@ def main():
             login_window = create_login_window()
             event, values = login_window.read()
             sign_on = login(values[0], values[1], login_window, event)
-        if sign_on == 2:
+        if sign_on == 1:
+            login_window.close()
+            library_window = create_library_UI()
+            event, values = library_window.read()
+        elif sign_on == 2:
             login_window.close()
             create_account()
-        #TODO: Create UI for music library, write a function to access/interact with it, and call that function if sign_on == 1
     elif event == "Create Account":
         login_window.close()
         create_account()
