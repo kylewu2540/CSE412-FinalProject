@@ -118,12 +118,13 @@ def create_library_UI():
         ]
     tabgrp = [
         [sg.TabGroup([
-            [sg.Tab('Library', library_layout)],
-            [sg.Tab('Favorites', favorites_layout)]
-            ])]
+            [sg.Tab('Library', library_layout, key = '-LIBRARY_TAB-')],
+            [sg.Tab('Favorites', favorites_layout, key = '-FAVORITES_TAB-')]
+            ], key = '-TABGRP-')]
         ] 
     library_UI_window = sg.Window("CSE 412 Project", tabgrp).finalize()
     library_UI_window.maximize()
+    library_UI_window['-TABGRP-'].expand(True, True)
     return library_UI_window
 
 #Returns 0 on an unsuccessful login, 1 on a successful login, and 2 if the user wants to create an account
