@@ -78,7 +78,7 @@ def create_login_window():
     login_layout = [
         [sg.Text("Please enter your username and password, or create an account")], 
         [sg.Text("Username: "), sg.InputText()],
-        [sg.Text("Password: "), sg.InputText()],
+        [sg.Text("Password: "), sg.InputText(password_char = '*')],
         [sg.Button("Log In")],
         [sg.Button("Create Account")]
         ]
@@ -96,7 +96,7 @@ def create_incorrect_login_window():
 def create_create_account_window():
     create_account_layout = [
        [sg.Text("Username: "), sg.InputText()],
-       [sg.Text("Password: "), sg.InputText()],
+       [sg.Text("Password: "), sg.InputText(password_char = '*')],
        [sg.Button("Create Account")]
        ] 
     create_account_window = sg.Window("CSE 412 Project", create_account_layout, margins = (100, 50))
