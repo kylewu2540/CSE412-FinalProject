@@ -111,11 +111,11 @@ def create_library_UI():
         2. Set the 'values' parameter equal to the SQL database
     """
     library_layout = [
-        [sg.Text("Add song to Favorites: "), sg.InputText()],
+        [sg.Text("Add song to Favorites: "), sg.InputText(), sg.Button("Submit")],
         [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
         ]
     favorites_layout = [
-        [sg.Text("Remove song from Favorites: "), sg.InputText()],
+        [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Submit")],
         [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
         ]
     tabgrp = [
