@@ -10,7 +10,7 @@ import PySimpleGUI as sg
 import sys
 import psycopg2 as pg
 import random 
-"""connect to pg4admin database """
+
 
 
 """creates the tables with attributes and constraints  """
@@ -231,193 +231,6 @@ cur.executemany(insert_songalbum_query, songalbumData)
 """
 
 
-"""
-
-print("USERS\n")
-cur.execute("SELECT * FROM users")
-
-users = cur.fetchall()
-
-for i in users:
-    print(i[0], i[1], i[2], i[3],i[4], sep = ' , ')
-   
-print("--------------------------------------------------------------------\n\n")
-
-print("ALBUM\n")
-cur.execute("SELECT * FROM album")
-album = cur.fetchall()
-for i in album:
-    print(i[0], i[1], i[2], i[3],i[4], sep = ' , ')
-    
-print("--------------------------------------------------------------------\n\n")
-
-print("ARTIST\n")
-cur.execute("SELECT * FROM artist")
-artist = cur.fetchall()
-for i in artist:
-    print(i[0], i[1], i[2], sep = ' , ')
-print("--------------------------------------------------------------------\n\n")
-
-print("SONG\n")
-cur.execute("SELECT * FROM song")
-song = cur.fetchall()
-for i in song:
-    print(i[0], i[1], i[2], i[3],i[4],i[5], sep = ' , ')
-print("--------------------------------------------------------------------\n\n")
-
-print("RATING\n")
-cur.execute("SELECT * FROM rating")
-rating = cur.fetchall()
-for i in rating:
-    print(i[0], i[1],  sep = ' , ')
-print("--------------------------------------------------------------------\n\n")
-
-print("FAVORITES\n")
-cur.execute("SELECT * FROM favorites")
-favorites = cur.fetchall()
-for i in favorites:
-    print(i[0], i[1],  sep = ' , ')
-print("--------------------------------------------------------------------\n\n")
-
-print("albumsongrelation\n")
-cur.execute("SELECT * FROM albumsongrelation")
-albumsongrelation = cur.fetchall()
-for i in albumsongrelation:
-    print(i[0], i[1],  sep = ' , ')
-print("--------------------------------------------------------------------\n\n")
-
-
-print("albumartist\n")
-cur.execute("SELECT * FROM artistalbum")
-albumartist = cur.fetchall()
-for i in albumartist:
-    print(i[0], i[1],  sep = ' , ')
-print("--------------------------------------------------------------------\n\n")
-
-
-
-print("SELECT title FROM song WHERE song.artistname= 'Alicia Keys'")
-cur.execute("SELECT title FROM song WHERE song.artistname= 'Alicia Keys'"); 
-sel= cur.fetchall()
-for i in sel:
-    print(i[0], sep=' ')
-
-print("-------------------------\n\n")
-print("SELECT artistname FROM song WHERE genres = 'Hip Hop'")
-cur.execute("SELECT artistname FROM song WHERE genres = 'Hip Hop'");
-sel = cur.fetchall()
-for i in sel:
-    print(i[0], sep= ' ')
- 
-print("-------------------------\n\n")
-print("SELECT title, artistname FROM song, rating WHERE song.songid = rating.songid AND rating.avgrating > 2")
-cur.execute("SELECT title,artistname FROM song, rating WHERE song.songid = rating.songid AND rating.avgrating > 2 ")
-sel = cur.fetchall()
-for i in sel:
-    print(i[0],i[1], sep= ' ')
-
-print("-------------------------\n\n")
-
-
-
-
-
-
-
-
-
-print("USERS before update password \n")
-cur.execute("SELECT userid, fname, username, userpass FROM users")
-
-users = cur.fetchall()
-
-for i in users:
-    print(i[0], i[1], i[2], i[3], sep = ' , ')
-   
-print("--------------------------------------------------------------------\n\n")
-
-
-cur.execute("UPDATE users SET userpass = 'password999999' WHERE userid = 14589652 AND fname = 'Johnny'")
-
-print("USERS after update password \n")
-cur.execute("SELECT userid, fname, username, userpass FROM users")
-
-users = cur.fetchall()
-
-for i in users:
-    print(i[0], i[1], i[2], i[3], sep = ' , ')
-   
-print("--------------------------------------------------------------------\n\n")
-
-
-
-
-
-
-
-"""
-
-
-"""
-
-print("USERS before inserting victor  \n")
-cur.execute("SELECT userid, fname, username, userpass FROM users")
-
-users = cur.fetchall()
-
-for i in users:
-    print(i[0], i[1], i[2], i[3], sep = ' , ')
-   
-print("--------------------------------------------------------------------\n\n")
-
-cur.execute("INSERT INTO users (userid, fname, lname, username, userpass) VALUES ('23485832', 'victor', 'ruiz', 'vruiz14','password123' )")
-
-
-
-
-print("USERS after inserting victor  \n")
-cur.execute("SELECT userid, fname, username, userpass FROM users")
-
-users = cur.fetchall()
-
-for i in users:
-    print(i[0], i[1], i[2], i[3], sep = ' , ')
-   
-print("--------------------------------------------------------------------\n\n")
-
-
-"""
-"""
-cur.execute("DELETE FROM users WHERE fname = 'victor' AND lname = 'ruiz'")
-
-
-
-
-print("USERS after deleting victor  \n")
-cur.execute("SELECT userid, fname, username, userpass FROM users")
-
-users = cur.fetchall()
-
-for i in users:
-    print(i[0], i[1], i[2], i[3], sep = ' , ')
-   
-print("--------------------------------------------------------------------\n\n")
-
-
-"""
-
-
-
-
-"""cur.execute("UPDATE users SET userpass = 123456 WHERE userid = 14589652")"""
-
-
-""" close connections""" 
-
-
-""" commits them so they show up on database"""
-
-
 
 
 
@@ -510,12 +323,20 @@ def create_account():
     if event == "Create Account":
         #TODO: Replace the following line of code with an SQL command to add the username and password to the database
         accounts[values[0]] = values[1]
+         """used to generate random userid"""
         random_num = random.randint(10000000,99999999)
+
+        """the %s are the values that that will be passed through the username_pass_data"""
         insert_username_pass = "INSERT INTO users (userid ,username, fname, lname,  userpass) VALUES (%s,%s,%s, %s, %s)"
-        username_pass_data = [(random_num,values[0], values[1],values[2],values[3])]
+        username_pass_data = [(random_num, values[0], values[1],values[2],values[3])]
         cur.execute("SELECT userid, fname, username, userpass FROM users")
+        """in order to check all the entries have to execute the cur.execute query"""
+        """using fetchall i can then loop through each column value checking for matching username or userid"""
+        """if theres a match then abort back to main otherwise commit the query """
+
         users = cur.fetchall()
         exists = False
+        
         for i in users:
             if(values[0] == i[2]):
                 print("Username exists!\n")
@@ -540,8 +361,7 @@ def create_account():
 
        
             
-        """create_account_window.close()"""
-    """main()"""
+  
 
 def main():
     global con,cur
