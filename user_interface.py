@@ -9,11 +9,13 @@ from tkinter.constants import INSERT
 import PySimpleGUI as sg
 import sys
 import psycopg2 as pg
-"""connect to pg4admin database  """
-con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicDB")
-filelocation =r'C:\Users\ruizv\OneDrive\Desktop\ASU\CSE 412\data.csv'
-cur = con.cursor()
+import random 
+"""connect to pg4admin database """
+
+
 """creates the tables with attributes and constraints  """
+
+create_db = '''CREATE database musicDB '''
 create_song = '''CREATE TABLE IF NOT EXISTS "song" (
                     songID  integer PRIMARY KEY,
                     Title   varchar(40) NOT NULL,
@@ -27,7 +29,7 @@ create_users = ''' CREATE TABLE IF NOT EXISTS "users" (
                     UserID  integer PRIMARY KEY,
                     fname   varchar(20) NOT NULL, 
                     lname   varchar(20) NOT NULL, 
-                    emailAddr varchar(40) NOT NULL, 
+                    username varchar(40) NOT NULL, 
                     userPass    varchar(50) NOT NULL
                      
 
@@ -43,39 +45,70 @@ create_album = ''' CREATE TABLE IF NOT EXISTS "album" (
                     AlbumID  integer PRIMARY KEY,
                     albumName   varchar(40) NOT NULL, 
                     artistName   varchar(20) NOT NULL, 
-                    releaseYear     DATE, 
+                    releaseYear    DATE, 
                     genres      varchar(20)
                     
                     )'''
 create_rating = '''CREATE TABLE IF NOT EXISTS "rating" (
-                    avgRating   integer,
-                    songID      integer REFERENCES song(songID)
+                    songID integer,
+                    FOREIGN KEY(songID) REFERENCES song(songID),                   
+                    avgRating integer
+                   
+                  
                     )'''
 
 create_favorites = ''' CREATE TABLE IF NOT EXISTS "favorites" (
-                    UserID  integer  REFERENCES users(UserID),
-                    listID  integer PRIMARY KEY
+                    songID integer, 
+                    userID integer,
+                    PRIMARY KEY (songID, userID),
+                    FOREIGN KEY(songID) REFERENCES song(songID),
+                    FOREIGN KEY (userID) REFERENCES users(userID),
+                    listID  integer 
                    )'''
 
+create_makes = '''CREATE TABLE IF NOT EXISTS "artistalbum" (
+                AlbumID integer,
+                ArtistID integer, 
+                PRIMARY KEY(AlbumID, ArtistID),
+                FOREIGN KEY (AlbumID)  REFERENCES album(AlbumID),
+                FOREIGN KEY(ArtistID) REFERENCES artist(ArtistID)
 
-"""need to do insert statements for data  """
+                )'''
 
-"""executes the sql commands for creating the tables  """
-cur.execute(create_artist)
+create_song_album_relation = '''CREATE TABLE IF NOT EXISTS "albumsongrelation"(
+                            AlbumID integer, 
+                            songID  integer, 
+                            PRIMARY KEY(AlbumID, songID),
+                            FOREIGN KEY(AlbumID) REFERENCES album(AlbumID),
+                            FOREIGN KEY(songID) REFERENCES song(songID)
+
+                            )'''
+
+
+"""CREATE MUSICDB"""
+
+"""cur.execute(create_db)"""
+
+
+
+
+"""cur.execute(create_artist)
 cur.execute(create_song)
 cur.execute(create_users)
-
 cur.execute(create_album)
-cur.execute(create_rating)
 cur.execute(create_favorites)
+cur.execute(create_makes)
+cur.execute(create_song_album_relation)
+cur.execute(create_rating)
+"""
 
-insert_userinfo_query= "INSERT INTO users (userid, fname, lname, emailaddr, userpass) VALUES (%s,%s, %s, %s, %s)"
-userData = [('14589652', 'Johnny', 'Smith', 'jsmith@yahoo.com', '3242cDsx#@'),
-            ('34738040', 'Bradly',  'Johnson', 'bjohnson@gmail.com', 'b2dkd0x11'),
-            ('78568904', 'Charlie', 'Valentine', 'cvalentine@asu.edu','349dcdlsxx#@'),
-            ('75489203', 'Doug', 'Alson', 'dalson@gmail.com','98985vbdxk#)(2)'),
-            ('23942123', 'Ernesto', 'Lopez', 'elopez@yahoo.com','fdj04894!!@@'),
-            ('53982832', 'Xavier', 'Rivers','xrivers@gmail.com','bndf2$%$%')]
+insert_userinfo_query= "INSERT INTO users (userid, fname, lname, username, userpass) VALUES (%s,%s, %s, %s, %s)"
+userData = [('14589652', 'Johnny', 'Smith', 'johnS11', '3242cDsx#@'),
+            ('34738040', 'Bradly',  'Johnson', 'bradJ23', 'b2dkd0x11'),
+            ('78568904', 'Charlie', 'Valentine', 'charVin15','349dcdlsxx#@'),
+            ('75489203', 'Doug', 'Alson', 'dougAls19','98985vbdxk#)(2)'),
+            ('23942123', 'Ernesto', 'Lopez', 'elopz53','fdj04894!!@@'),
+            ('53982832', 'Xavier', 'Rivers','xriver55','bndf2$%$%')]
 
 
 insert_artistalbum_info_query = "INSERT INTO album (albumid, albumname, artistname, releaseyear, genres) VALUES (%s, %s, %s, %s, %s)"
@@ -88,7 +121,7 @@ albumData = [('604','The Brave','Adam Calhoun','18-Feb-22','Hip Hop'),
              ('625','Unorthodox Jukebox','Bruno Mars','1-Oct-12', 'Pop Rock'),
              ('654','Romance','Camila Cabello','21-Jun-19', 'Latin Pop'),
              ('835','Invasion of Privacy','Cardi B','4-Apr-18','Hip Hop'),
-             ('24' ,'F.A.M.E','Chris Brown','25-Apr-10','Dance Pop'),
+             ('248' ,'F.A.M.E','Chris Brown','25-Apr-10','Dance Pop'),
              ('925','Starting Over','Chris Stapleton','28-Apr-20','Country'),
              ('491','Listen','David Guetta','16-Mar-15','Trap'),
              ('793','Demi','Demetria Lovato','25-Feb-13','Electric Pop'),
@@ -162,49 +195,232 @@ ratingData = [('2','5010'),
               ('4','9222'),
               ('5','6752')]
 
-insert_userfavorites_query = "INSERT INTO favorites (userid, listid) VALUES (%s, %s)"
-favoritesData = [('23942123','005554742'),
-                 ('53982832','741548421')]
+insert_userfavorites_query = "INSERT INTO favorites (songid, userid, listid) VALUES (%s,%s, %s)"
+favoritesData = [('5010', '14589652', '000453'),
+                 ('6732', '14589652','000453'),
+                 ('9810','14589652', '000453')]
+
+insert_makesrelation_query = "INSERT INTO artistalbum (albumid, artistid) VALUES (%s, %s)"
+makesData= [('718','8355'),
+            ('491', '37563')]
+
+insert_songalbum_query= "INSERT INTO albumsongrelation (albumid, songid) VALUES (%s, %s)"
+songalbumData = [('910','8421'),
+                 ('358','9810')]
 
 
+
+
+
+"""INSERT DATA"""
 """
 cur.executemany(insert_artist_info_query, artistData)
 cur.executemany(insert_artistalbum_info_query, albumData)
 cur.executemany(insert_songinfo_query, data)
 
 cur.executemany(insert_userinfo_query, userData)
+
 cur.executemany(insert_songrating_query, ratingData)
+
 cur.executemany(insert_userfavorites_query, favoritesData)
 
+cur.executemany(insert_makesrelation_query, makesData)
+
+cur.executemany(insert_songalbum_query, songalbumData)
 
 """
+
+
 """
+
+print("USERS\n")
+cur.execute("SELECT * FROM users")
+
+users = cur.fetchall()
+
+for i in users:
+    print(i[0], i[1], i[2], i[3],i[4], sep = ' , ')
+   
+print("--------------------------------------------------------------------\n\n")
+
+print("ALBUM\n")
+cur.execute("SELECT * FROM album")
+album = cur.fetchall()
+for i in album:
+    print(i[0], i[1], i[2], i[3],i[4], sep = ' , ')
+    
+print("--------------------------------------------------------------------\n\n")
+
+print("ARTIST\n")
+cur.execute("SELECT * FROM artist")
+artist = cur.fetchall()
+for i in artist:
+    print(i[0], i[1], i[2], sep = ' , ')
+print("--------------------------------------------------------------------\n\n")
+
+print("SONG\n")
+cur.execute("SELECT * FROM song")
+song = cur.fetchall()
+for i in song:
+    print(i[0], i[1], i[2], i[3],i[4],i[5], sep = ' , ')
+print("--------------------------------------------------------------------\n\n")
+
+print("RATING\n")
+cur.execute("SELECT * FROM rating")
+rating = cur.fetchall()
+for i in rating:
+    print(i[0], i[1],  sep = ' , ')
+print("--------------------------------------------------------------------\n\n")
+
+print("FAVORITES\n")
+cur.execute("SELECT * FROM favorites")
+favorites = cur.fetchall()
+for i in favorites:
+    print(i[0], i[1],  sep = ' , ')
+print("--------------------------------------------------------------------\n\n")
+
+print("albumsongrelation\n")
+cur.execute("SELECT * FROM albumsongrelation")
+albumsongrelation = cur.fetchall()
+for i in albumsongrelation:
+    print(i[0], i[1],  sep = ' , ')
+print("--------------------------------------------------------------------\n\n")
+
+
+print("albumartist\n")
+cur.execute("SELECT * FROM artistalbum")
+albumartist = cur.fetchall()
+for i in albumartist:
+    print(i[0], i[1],  sep = ' , ')
+print("--------------------------------------------------------------------\n\n")
+
+
+
+print("SELECT title FROM song WHERE song.artistname= 'Alicia Keys'")
 cur.execute("SELECT title FROM song WHERE song.artistname= 'Alicia Keys'"); 
-print(cur.fetchall())
-cur.execute("SELECT artistname FROM song WHERE genres = 'Hip Hop'");
-print(cur.fetchall())
+sel= cur.fetchall()
+for i in sel:
+    print(i[0], sep=' ')
 
-cur.execute("SELECT title FROM song, rating WHERE song.songid = rating.songid AND rating.avgrating > 2")
-print(cur.fetchall())
+print("-------------------------\n\n")
+print("SELECT artistname FROM song WHERE genres = 'Hip Hop'")
+cur.execute("SELECT artistname FROM song WHERE genres = 'Hip Hop'");
+sel = cur.fetchall()
+for i in sel:
+    print(i[0], sep= ' ')
+ 
+print("-------------------------\n\n")
+print("SELECT title, artistname FROM song, rating WHERE song.songid = rating.songid AND rating.avgrating > 2")
+cur.execute("SELECT title,artistname FROM song, rating WHERE song.songid = rating.songid AND rating.avgrating > 2 ")
+sel = cur.fetchall()
+for i in sel:
+    print(i[0],i[1], sep= ' ')
+
+print("-------------------------\n\n")
+
+
+
+
+
+
+
+
+
+print("USERS before update password \n")
+cur.execute("SELECT userid, fname, username, userpass FROM users")
+
+users = cur.fetchall()
+
+for i in users:
+    print(i[0], i[1], i[2], i[3], sep = ' , ')
+   
+print("--------------------------------------------------------------------\n\n")
+
+
+cur.execute("UPDATE users SET userpass = 'password999999' WHERE userid = 14589652 AND fname = 'Johnny'")
+
+print("USERS after update password \n")
+cur.execute("SELECT userid, fname, username, userpass FROM users")
+
+users = cur.fetchall()
+
+for i in users:
+    print(i[0], i[1], i[2], i[3], sep = ' , ')
+   
+print("--------------------------------------------------------------------\n\n")
+
+
+
+
+
+
+
 """
+
+
 """
-cur.execute("UPDATE users SET userpass = 123456 WHERE userid = 14589652")
-"""
-"""
-cur.execute("INSERT INTO users (userid, fname, lname, emailaddr, userpass) VALUES ('23485832', 'victor', 'ruiz', 'vruiz@asu.edu','newpass' )")
+
+print("USERS before inserting victor  \n")
+cur.execute("SELECT userid, fname, username, userpass FROM users")
+
+users = cur.fetchall()
+
+for i in users:
+    print(i[0], i[1], i[2], i[3], sep = ' , ')
+   
+print("--------------------------------------------------------------------\n\n")
+
+cur.execute("INSERT INTO users (userid, fname, lname, username, userpass) VALUES ('23485832', 'victor', 'ruiz', 'vruiz14','password123' )")
+
+
+
+
+print("USERS after inserting victor  \n")
+cur.execute("SELECT userid, fname, username, userpass FROM users")
+
+users = cur.fetchall()
+
+for i in users:
+    print(i[0], i[1], i[2], i[3], sep = ' , ')
+   
+print("--------------------------------------------------------------------\n\n")
+
+
 """
 """
 cur.execute("DELETE FROM users WHERE fname = 'victor' AND lname = 'ruiz'")
-"""
-cur.execute("SELECT * FROM users")
-print(cur.fetchall())
 
-        
-""" commits them so they show up on database"""
-con.commit()
+
+
+
+print("USERS after deleting victor  \n")
+cur.execute("SELECT userid, fname, username, userpass FROM users")
+
+users = cur.fetchall()
+
+for i in users:
+    print(i[0], i[1], i[2], i[3], sep = ' , ')
+   
+print("--------------------------------------------------------------------\n\n")
+
+
+"""
+
+
+
+
+"""cur.execute("UPDATE users SET userpass = 123456 WHERE userid = 14589652")"""
+
+
 """ close connections""" 
-cur.close()
-con.close()
+
+
+""" commits them so they show up on database"""
+
+
+
+
+
 
 #Temp login dictionary. Will be replaced with a SQL database
 accounts = {'Admin':'123456'}
@@ -213,7 +429,7 @@ def create_login_window():
     login_layout = [
         [sg.Text("Please enter your username and password, or create an account")], 
         [sg.Text("Username: "), sg.InputText()],
-        [sg.Text("Password: "), sg.InputText()],
+        [sg.Text("Password: "), sg.InputText(password_char = '*')],
         [sg.Button("Log In")],
         [sg.Button("Create Account")]
         ]
@@ -230,12 +446,41 @@ def create_incorrect_login_window():
 
 def create_create_account_window():
     create_account_layout = [
-       [sg.Text(example), sg.InputText()],
-       [sg.Text("Password: "), sg.InputText()],
+       [sg.Text("Username: "), sg.InputText()],
+       [sg.Text("First Name: "), sg.InputText()],
+       [sg.Text("Last Name: "), sg.InputText()],
+       [sg.Text("Password: "), sg.InputText(password_char = '*')],
        [sg.Button("Create Account")]
        ] 
     create_account_window = sg.Window("CSE 412 Project", create_account_layout, margins = (100, 50))
     return create_account_window
+  
+#The music library UI is composed of the library and favorites tab
+#These two tabs are very similar; the only difference is that the table in favorites is a subset of the table in library
+def create_library_UI():
+    """
+    TODO:
+        1. Format the tables to fit the screen
+        2. Set the 'values' parameter equal to the SQL database
+    """
+    library_layout = [
+        [sg.Text("Add song to Favorites: "), sg.InputText(), sg.Button("Submit")],
+        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        ]
+    favorites_layout = [
+        [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Submit")],
+        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        ]
+    tabgrp = [
+        [sg.TabGroup([
+            [sg.Tab('Library', library_layout, key = '-LIBRARY_TAB-')],
+            [sg.Tab('Favorites', favorites_layout, key = '-FAVORITES_TAB-')]
+            ], key = '-TABGRP-')]
+        ] 
+    library_UI_window = sg.Window("CSE 412 Project", tabgrp).finalize()
+    library_UI_window.maximize()
+    library_UI_window['-TABGRP-'].expand(True, True)
+    return library_UI_window
 
 #Returns 0 on an unsuccessful login, 1 on a successful login, and 2 if the user wants to create an account
 #Parameters: the provided username, the provided password, the login window, the login window's event handler
@@ -265,11 +510,44 @@ def create_account():
     if event == "Create Account":
         #TODO: Replace the following line of code with an SQL command to add the username and password to the database
         accounts[values[0]] = values[1]
-        
-        create_account_window.close()
-    main()
+        random_num = random.randint(10000000,99999999)
+        insert_username_pass = "INSERT INTO users (userid ,username, fname, lname,  userpass) VALUES (%s,%s,%s, %s, %s)"
+        username_pass_data = [(random_num,values[0], values[1],values[2],values[3])]
+        cur.execute("SELECT userid, fname, username, userpass FROM users")
+        users = cur.fetchall()
+        exists = False
+        for i in users:
+            if(values[0] == i[2]):
+                print("Username exists!\n")
+                exists = True
+                create_account_window.close()
+                main()
+            elif random_num == i[0]:
+                print("Same ID exists!\n")
+                exists = True
+                create_account_window.close()
+                main()
+ 
+
+
+        if exists == False:
+                cur.executemany(insert_username_pass,username_pass_data)
+                con.commit()
+                print("Account Successfully Created!\n")
+                create_account_window.close()
+                main()
+       
+
+       
+            
+        """create_account_window.close()"""
+    """main()"""
 
 def main():
+    global con,cur
+    con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
+    cur = con.cursor()
+    con.autocommit= True
     login_window = create_login_window()
     event, values = login_window.read()
     if event == "Log In":
@@ -281,15 +559,21 @@ def main():
             login_window = create_login_window()
             event, values = login_window.read()
             sign_on = login(values[0], values[1], login_window, event)
-        if sign_on == 2:
+        if sign_on == 1:
+            login_window.close()
+            library_window = create_library_UI()
+            event, values = library_window.read()
+        elif sign_on == 2:
             login_window.close()
             create_account()
-        #TODO: Create UI for music library, write a function to access/interact with it, and call that function if sign_on == 1
     elif event == "Create Account":
         login_window.close()
         create_account()
     elif event == sg.WIN_CLOSED:
+        cur.close()
+        con.close()
         sys.exit()
+       
         
 main()
         
