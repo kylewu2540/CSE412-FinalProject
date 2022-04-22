@@ -323,9 +323,7 @@ def create_account():
     if event == "Create Account":
         #TODO: Replace the following line of code with an SQL command to add the username and password to the database
         accounts[values[0]] = values[1]
-         """used to generate random userid"""
         random_num = random.randint(10000000,99999999)
-
         """the %s are the values that that will be passed through the username_pass_data"""
         insert_username_pass = "INSERT INTO users (userid ,username, fname, lname,  userpass) VALUES (%s,%s,%s, %s, %s)"
         username_pass_data = [(random_num, values[0], values[1],values[2],values[3])]
@@ -364,35 +362,52 @@ def create_account():
   
 
 def main():
-    global con,cur
+    global con,cur,sign_on
     con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
     cur = con.cursor()
     con.autocommit= True
     login_window = create_login_window()
     event, values = login_window.read()
-    if event == "Log In":
-        #Replace this if statement with an SQL command that performs the same task
-        sign_on = login(values[0], values[1], login_window, event)
-        #The user is continually displayed an error message and prompted to log in as long as they keep entering
-        #incorrect usernames and passwords
-        while sign_on == 0:
-            login_window = create_login_window()
-            event, values = login_window.read()
-            sign_on = login(values[0], values[1], login_window, event)
-        if sign_on == 1:
+    cur.execute("SELECT userid, fname, username, userpass FROM users")
+    users = cur.fetchall()
+    success = False
+    for i in users:
+        if values[0] == i[2] and values[1] == i[3]:
+            print("username and password match!")
+            success = True
             login_window.close()
             library_window = create_library_UI()
             event, values = library_window.read()
-        elif sign_on == 2:
-            login_window.close()
-            create_account()
-    elif event == "Create Account":
-        login_window.close()
-        create_account()
-    elif event == sg.WIN_CLOSED:
-        cur.close()
-        con.close()
-        sys.exit()
+           #open window after successful login
+
+    if success == False:
+      sign_on = 0
+      print("login failed!\n")
+
+       
+        
+
+   # sign_on = login(values[0], values[1], login_window, event)
+        #The user is continually displayed an error message and prompted to log in as long as they keep entering
+        #incorrect usernames and passwords
+    while sign_on == 0:
+         login_window = create_login_window()
+         event, values = login_window.read()
+         sign_on = login(values[0], values[1], login_window, event)
+         if success == True:
+             login_window.close()
+             library_window = create_library_UI()
+             event, values = library_window.read()
+         elif sign_on == 2:
+             login_window.close()
+             create_account()
+         elif event == "Create Account":
+             login_window.close()
+             create_account()
+         elif event == sg.WIN_CLOSED:
+             cur.close()
+             con.close()
+             sys.exit()
        
         
 main()
