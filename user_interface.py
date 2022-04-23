@@ -308,11 +308,18 @@ def login(username, password, login_window, event):
             success = True
             return 1
            #open window after successful login
-
     
+    
+    if event == "Create Account":
+        login_window.close()
+        create_account()
+        
+
     if success == False:
        print("login failed!\n")
        return 0
+
+
 
      
 #Inserts the username and password as a key-vakue pair in accounts
@@ -373,6 +380,8 @@ def main():
     print("curent sign", sign_on)
         #The user is continually displayed an error message and prompted to log in as long as they keep entering
         #incorrect usernames and passwords
+   
+
     while sign_on == 0:
          login_window = create_login_window()
          event, values = login_window.read()
@@ -382,6 +391,7 @@ def main():
         login_window.close()
         library_window = create_library_UI()
         event, values = library_window.read()
+
 
 
 """
