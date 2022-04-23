@@ -299,22 +299,22 @@ def create_library_UI():
 #Parameters: the provided username, the provided password, the login window, the login window's event handler
 #I made the event handler a parameter to avoid creating multiple event handlers for the same window
 def login(username, password, login_window, event):
-    if username in accounts and password == accounts.get(username):
-        login_window.close()
-        return 1
-    elif event == "Create Account":
-        login_window.close()
-        return 2
-    elif event == sg.WIN_CLOSED:
-        sys.exit()
-    else:
-        login_window.close()
-        incorrect_login_window = create_incorrect_login_window()
-        event, values = incorrect_login_window.read()
-        if event == "OK" or event == sg.WIN_CLOSED:
-            incorrect_login_window.close()
-        return 0
-            
+    cur.execute("SELECT userid, fname, username, userpass FROM users")
+    users = cur.fetchall()
+    success = False
+    for i in users:
+        if username == i[2] and password == i[3]:
+            print("username and password match!")
+            success = True
+            return 1
+           #open window after successful login
+
+    
+    if success == False:
+       print("login failed!\n")
+       return 0
+
+     
 #Inserts the username and password as a key-vakue pair in accounts
 #This should eventually interact with an SQL database, not a Python dictionary            
 def create_account():
@@ -362,40 +362,41 @@ def create_account():
   
 
 def main():
-    global con,cur,sign_on
+    global con,cur
     con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
     cur = con.cursor()
     con.autocommit= True
     login_window = create_login_window()
     event, values = login_window.read()
-    cur.execute("SELECT userid, fname, username, userpass FROM users")
-    users = cur.fetchall()
-    success = False
-    for i in users:
-        if values[0] == i[2] and values[1] == i[3]:
-            print("username and password match!")
-            success = True
-            login_window.close()
-            library_window = create_library_UI()
-            event, values = library_window.read()
-           #open window after successful login
-
-    if success == False:
-      sign_on = 0
-      print("login failed!\n")
-
-       
-        
-
-   # sign_on = login(values[0], values[1], login_window, event)
+   
+    sign_on = login(values[0], values[1], login_window, event)
+    print("curent sign", sign_on)
         #The user is continually displayed an error message and prompted to log in as long as they keep entering
         #incorrect usernames and passwords
     while sign_on == 0:
          login_window = create_login_window()
          event, values = login_window.read()
          sign_on = login(values[0], values[1], login_window, event)
-         if success == True:
+
+    while sign_on == 1:
+        login_window.close()
+        library_window = create_library_UI()
+        event, values = library_window.read()
+
+
+"""
+    while sign_on == 0:
+         
+         login_window = create_login_window()
+         
+         event, values = login_window.read()
+         #might have to open the libary inside the login window otherwise its gonna ask for
+         #pass and username twice
+         sign_on = login(values[0], values[1], login_window, event)
+         print("current sign value", sign_on)
+         if sign_on == 1:
              login_window.close()
+             
              library_window = create_library_UI()
              event, values = library_window.read()
          elif sign_on == 2:
@@ -408,7 +409,7 @@ def main():
              cur.close()
              con.close()
              sys.exit()
-       
+   """    
         
 main()
         
