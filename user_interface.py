@@ -435,10 +435,13 @@ def main():
              con.commit()
         
         #display current list of songs in a popup 
-        sg.Popup("Current list")
-        cur.execute("SELECT title FROM song, favorites WHERE song.songid = favorites.songid")
-        song_list = cur.fetchall()
-        sg.Popup(song_list)
+        if found == True:
+            sg.Popup("Current list")
+            cur.execute("SELECT title FROM song, favorites WHERE song.songid = favorites.songid")
+            song_list = cur.fetchall()
+            sg.Popup(song_list)
+        else:
+            sg.Popup("Failed to add to Favorites")
             
         if event == sg.WIN_CLOSED:
                 cur.close()
