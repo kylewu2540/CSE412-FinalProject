@@ -282,7 +282,7 @@ def create_library_UI():
         [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
         ]
     favorites_layout = [
-        [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Submit")],
+        [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Remove ")],
         [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
         ]
     tabgrp = [
@@ -292,7 +292,7 @@ def create_library_UI():
             ], key = '-TABGRP-')]
         ] 
     library_UI_window = sg.Window("CSE 412 Project", tabgrp).finalize()
-    library_UI_window.maximize()
+    #library_UI_window.maximize()
     library_UI_window['-TABGRP-'].expand(True, True)
     return library_UI_window
 
@@ -347,6 +347,7 @@ def create_account():
         
         for i in users:
             if(values[0] == i[2]):
+                user = values[0]
                 print("Username exists!\n")
                 exists = True
                 create_account_window.close()
@@ -374,6 +375,7 @@ def create_account():
 
 def main():
     global con,cur
+    
     con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
     cur = con.cursor()
     con.autocommit= True
@@ -381,7 +383,7 @@ def main():
     event, values = login_window.read()
    
     sign_on = login(values[0], values[1], login_window, event)
- 
+    user = values[0]
    
     #stay on main screen when login fails 
     while sign_on == 0:
@@ -392,11 +394,52 @@ def main():
          login_window = create_login_window()
          event, values = login_window.read()
          sign_on = login(values[0], values[1], login_window, event)
+         
     #open and stay on libary window when login successful
     while sign_on == 1:
         login_window.close()
+        songFound =" "
+        userID =" "
         library_window = create_library_UI()
         event, values = library_window.read()
+        #execute the sql statements to get title, songid, userid, and username from respective table
+        cur.execute("SELECT title, songid FROM song")
+        song = cur.fetchall()
+        cur.execute("SELECT userid, username FROM users")
+        all_userid = cur.fetchall()
+        found = False
+       #when submit button is pressed look for the name of the song the user put in textbox
+       #if it is found it will set bool to true which will trigger the next if statement
+        if event == "Submit":
+            
+            for i in song:
+                if i[0] == values[0]:
+                    found = True
+                    songFound = i[1]
+                    sg.Popup(i[0])
+
+       #if the song is in the database find the userid of the user thats currently signed in 
+       #once user is found insert the song that was chosen into the favorites table
+        if found == True:
+            
+             
+             for i in all_userid:
+                 if i[1] == user:
+                     userID= i[0]
+                     print("found user", i[0])
+
+             
+             insert_song_toFavorites = "INSERT INTO Favorites (songid ,userid, listid) VALUES (%s,%s,%s)"
+             song = [(songFound, userID, '443')]
+             cur.executemany(insert_song_toFavorites,song)
+             con.commit()
+        
+        #display current list of songs in a popup 
+        sg.Popup("Current list")
+        cur.execute("SELECT title FROM song, favorites WHERE song.songid = favorites.songid")
+        song_list = cur.fetchall()
+        sg.Popup(song_list)
+            
         if event == sg.WIN_CLOSED:
                 cur.close()
                 con.close()
