@@ -238,6 +238,7 @@ cur.executemany(insert_songalbum_query, songalbumData)
 #Temp login dictionary. Will be replaced with a SQL database
 accounts = {'Admin':'123456'}
 
+
 def create_login_window():
     login_layout = [
         [sg.Text("Please enter your username and password, or create an account")], 
@@ -304,7 +305,8 @@ def login(username, password, login_window, event):
     success = False
     for i in users:
         if username == i[2] and password == i[3]:
-            print("username and password match!")
+            #print("username and password match!")
+            sg.Popup("Login Success!")
             success = True
             return 1
            #open window after successful login
@@ -316,8 +318,9 @@ def login(username, password, login_window, event):
         
 
     if success == False:
-       print("login failed!\n")
-       return 0
+        sg.Popup('Login Failed!')
+        #print("login failed!\n")
+        return 0
 
 
 
@@ -359,7 +362,8 @@ def create_account():
         if exists == False:
                 cur.executemany(insert_username_pass,username_pass_data)
                 con.commit()
-                print("Account Successfully Created!\n")
+                sg.Popup('Account Successfully Created!')
+                #print("Account Successfully Created!\n")
                 create_account_window.close()
                 main()
        
@@ -377,20 +381,26 @@ def main():
     event, values = login_window.read()
    
     sign_on = login(values[0], values[1], login_window, event)
-    print("curent sign", sign_on)
-        #The user is continually displayed an error message and prompted to log in as long as they keep entering
-        #incorrect usernames and passwords
+ 
    
-
+    #stay on main screen when login fails 
     while sign_on == 0:
+         if event == sg.WIN_CLOSED:
+             sys.exit()
+
+
          login_window = create_login_window()
          event, values = login_window.read()
          sign_on = login(values[0], values[1], login_window, event)
-
+    #open and stay on libary window when login successful
     while sign_on == 1:
         login_window.close()
         library_window = create_library_UI()
         event, values = library_window.read()
+        if event == sg.WIN_CLOSED:
+                cur.close()
+                con.close()
+                sys.exit()
 
 
 
