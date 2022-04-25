@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
 """
 Created on Mon Mar 14 13:51:45 2022
-Updated on Sun Apr 24 04:53:00 2022
 
-Written by Jake Kenny, Ryan Rademacher, Victor Ruiz, Kyle Wu
-
-<<<<<<< HEAD
 Updated on Sun Apr 24 04:53:00 2022
 Written by Jake Kenny, Ryan Rademacher, Victor Ruiz, Kyle Wu
-=======
->>>>>>> 2a8e3d52333a5207a80a25946a3564f9747af2cc
 """
 
 from tkinter.constants import INSERT
@@ -284,10 +278,6 @@ def create_library_UI(username):
         1. Format the tables to fit the screen
         2. Set the 'values' parameter equal to the SQL database
     """
-<<<<<<< HEAD
-=======
-
->>>>>>> 2a8e3d52333a5207a80a25946a3564f9747af2cc
     #Taking data from database to put into application
     #implement sorting system in library so user can sort by song, artist, album, releasedate, length, rating, genre
     #by changing the libSort tag and having appropriate changes in sg.Table / libVal
@@ -316,19 +306,11 @@ def create_library_UI(username):
     #adding data into application
     library_layout = [
         [sg.Text("Add song to Favorites: "), sg.InputText(), sg.Button("Submit")],
-<<<<<<< HEAD
         [sg.Table(values = libVal, headings = ['Song List', 'Length', 'Genre'])]
         ]
     favorites_layout = [
         [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Remove ")],
         [sg.Table(values = favVal, headings = ['Song List', 'Length', 'Genre'])]
-=======
-        [sg.Table(values = libVal, headings = ['song', 'length', 'genre'])]
-        ]
-    favorites_layout = [
-        [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Remove ")],
-        [sg.Table(values = favVal, headings = ['song', 'length', 'genre'])]
->>>>>>> 2a8e3d52333a5207a80a25946a3564f9747af2cc
         ]
     tabgrp = [
         [sg.TabGroup([
@@ -445,10 +427,7 @@ def main():
         login_window.close()
         songFound =" "
         userID =" "
-<<<<<<< HEAD
         random_num = 0
-=======
->>>>>>> 2a8e3d52333a5207a80a25946a3564f9747af2cc
         library_window = create_library_UI(user)
         event, values = library_window.read()
         #execute the sql statements to get title, songid, userid, and username from respective table
@@ -469,7 +448,7 @@ def main():
                 if i[0] == values[0]:
                     found = True
                     songFound = i[1]
-                    sg.Popup(i[0])
+                    #sg.Popup(i[0])
       
        #if the song is in the database find the userid of the user thats currently signed in 
        #once user is found insert the song that was chosen into the favorites table
@@ -495,9 +474,8 @@ def main():
                  random_num = random.randint(100,999)
              else:
                  listID = [i[0] for i in listID]
-                 print(listID)
                  x = listID[0]
-                 print(x, "  x value")
+                 
                  
             #check if song exists in the favorites 
              
