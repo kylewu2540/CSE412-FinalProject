@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Created on Mon Mar 14 13:51:45 2022
-
 Updated on Sun Apr 24 04:53:00 2022
 Written by Jake Kenny, Ryan Rademacher, Victor Ruiz, Kyle Wu
 """
@@ -24,7 +23,6 @@ create_song = '''CREATE TABLE IF NOT EXISTS "song" (
                     runTimeSeconds  integer, 
                     genres  varchar(20), 
                     artistName  varchar(20) NOT NULL 
-
                     )'''
 create_users = ''' CREATE TABLE IF NOT EXISTS "users" (
                     UserID  integer PRIMARY KEY,
@@ -33,7 +31,6 @@ create_users = ''' CREATE TABLE IF NOT EXISTS "users" (
                     username varchar(40) NOT NULL, 
                     userPass    varchar(50) NOT NULL
                      
-
                     )'''
 create_artist = ''' CREATE TABLE IF NOT EXISTS "artist" (
                     ArtistID  integer PRIMARY KEY,
@@ -73,7 +70,6 @@ create_makes = '''CREATE TABLE IF NOT EXISTS "artistalbum" (
                 PRIMARY KEY(AlbumID, ArtistID),
                 FOREIGN KEY (AlbumID)  REFERENCES album(AlbumID),
                 FOREIGN KEY(ArtistID) REFERENCES artist(ArtistID)
-
                 )'''
 
 create_song_album_relation = '''CREATE TABLE IF NOT EXISTS "albumsongrelation"(
@@ -82,7 +78,6 @@ create_song_album_relation = '''CREATE TABLE IF NOT EXISTS "albumsongrelation"(
                             PRIMARY KEY(AlbumID, songID),
                             FOREIGN KEY(AlbumID) REFERENCES album(AlbumID),
                             FOREIGN KEY(songID) REFERENCES song(songID)
-
                             )'''
 
 
@@ -218,17 +213,11 @@ songalbumData = [('910','8421'),
 cur.executemany(insert_artist_info_query, artistData)
 cur.executemany(insert_artistalbum_info_query, albumData)
 cur.executemany(insert_songinfo_query, data)
-
 cur.executemany(insert_userinfo_query, userData)
-
 cur.executemany(insert_songrating_query, ratingData)
-
 cur.executemany(insert_userfavorites_query, favoritesData)
-
 cur.executemany(insert_makesrelation_query, makesData)
-
 cur.executemany(insert_songalbum_query, songalbumData)
-
 """
 
 
@@ -396,14 +385,50 @@ def create_account():
                 main()
        
 
-       
+def remove_from_favorites(value, user):
+
+    #delete_song_toFavorites = "DELETE FROM FAVORITES WHERE songid = %s"
+    #cur.executemany(delete_song_toFavorites,value)
+    #con.commit()
+    print(user)
+    cur.execute("SELECT * FROM Favorites WHERE userid = %s", (user, ))
+    song_list = cur.fetchall()
+
+    print(song_list)
+
+    cur.execute("SELECT songid, title FROM song")
+
+    song_val = cur.fetchall()
+
+    #print(value)
+
+    tmp = 0
+    #print(song_val[0], "\t0")
+    #print(song_val[1], "\t1")
+
+    #print(song_val[1][0])
+
+    for i in song_val:
+        #print(i)
+        if i[1] == value:
+            #print(value)
+            tmp = i[0]
+            #print(tmp)
+
+
+    delete_song_toFavorites = "DELETE FROM FAVORITES WHERE songid = %s AND userid = %s"
+    song = [(tmp, user)]
+    cur.executemany(delete_song_toFavorites, song)
+    con.commit()
+
+    return True       
             
   
 
 def main():
     global con,cur
     
-    con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
+    con = pg.connect(host="localhost", user="postgres", password="greyAnteater12", dbname="musicDB")
     cur = con.cursor()
     con.autocommit= True
     login_window = create_login_window()
@@ -440,6 +465,19 @@ def main():
         no_listID = False
         found = False
         duplicate = False
+
+        #if remove button is pressed, it calls the remove_from_favorites function which removes a song name the user enters in
+        if event == "Remove ":
+            #print(values[2])
+            
+            user_id = ""
+            for i in all_userid:
+                if i[1] == user:
+                     user_id= i[0]
+                     
+            
+            remove_from_favorites(values[2], user_id)
+
        #when submit button is pressed look for the name of the song the user put in textbox
        #if it is found it will set bool to true which will trigger the next if statement
         if event == "Submit":
@@ -547,5 +585,3 @@ def main():
    """    
         
 main()
-        
-        
