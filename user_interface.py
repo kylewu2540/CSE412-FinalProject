@@ -2,7 +2,8 @@
 """
 Created on Mon Mar 14 13:51:45 2022
 
-Written by Jake Kenny
+Updated on Sun Apr 24 04:53:00 2022
+Written by Jake Kenny, Ryan Rademacher, Victor Ruiz, Kyle Wu
 """
 
 from tkinter.constants import INSERT
@@ -271,19 +272,45 @@ def create_create_account_window():
   
 #The music library UI is composed of the library and favorites tab
 #These two tabs are very similar; the only difference is that the table in favorites is a subset of the table in library
-def create_library_UI():
+def create_library_UI(username):
     """
     TODO:
         1. Format the tables to fit the screen
         2. Set the 'values' parameter equal to the SQL database
     """
+    #Taking data from database to put into application
+    #implement sorting system in library so user can sort by song, artist, album, releasedate, length, rating, genre
+    #by changing the libSort tag and having appropriate changes in sg.Table / libVal
+    libSort = "title"
+    if(libSort == "title"):
+        cur.execute("SELECT title, runtimeseconds, genres FROM song ORDER BY title ASC")
+    if(libSort == "genre"):
+        cur.execure("SELECT title, runtimeseconds, genres FROM song ORDER BY genres ASC")
+    libVal = cur.fetchall()
+
+    #implement favorite window to display current users favorites
+    favCheck = True
+    try:
+        cur.execute("SELECT title, runtimeseconds, genres " +
+            "FROM song, favorites, users WHERE song.songid = favorites.songid and " +
+            "favorites.userid = users.userid and users.username = \'" + username + "\' ORDER BY title ASC")
+    except:
+        print("no favorites for " + username)
+        favCheck = False
+
+    if(favCheck):
+        favVal = cur.fetchall()
+    else:
+        favVal = [[0, 0, 0]]
+
+    #adding data into application
     library_layout = [
         [sg.Text("Add song to Favorites: "), sg.InputText(), sg.Button("Submit")],
-        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        [sg.Table(values = libVal, headings = ['Song List', 'Length', 'Genre'])]
         ]
     favorites_layout = [
         [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Remove ")],
-        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        [sg.Table(values = favVal, headings = ['Song List', 'Length', 'Genre'])]
         ]
     tabgrp = [
         [sg.TabGroup([
@@ -400,14 +427,19 @@ def main():
         login_window.close()
         songFound =" "
         userID =" "
-        library_window = create_library_UI()
+        random_num = 0
+        library_window = create_library_UI(user)
         event, values = library_window.read()
         #execute the sql statements to get title, songid, userid, and username from respective table
         cur.execute("SELECT title, songid FROM song")
         song = cur.fetchall()
         cur.execute("SELECT userid, username FROM users")
         all_userid = cur.fetchall()
+        cur.execute("SELECT songid FROM favorites")
+        favorites = cur.fetchall()
+        no_listID = False
         found = False
+        duplicate = False
        #when submit button is pressed look for the name of the song the user put in textbox
        #if it is found it will set bool to true which will trigger the next if statement
         if event == "Submit":
@@ -417,32 +449,70 @@ def main():
                     found = True
                     songFound = i[1]
                     sg.Popup(i[0])
-
+      
        #if the song is in the database find the userid of the user thats currently signed in 
        #once user is found insert the song that was chosen into the favorites table
         if found == True:
             
-             
+             #search for userid that matches current signed on user
              for i in all_userid:
                  if i[1] == user:
                      userID= i[0]
-                     print("found user", i[0])
+                     #print("found user", i[0])
 
+             #duplicate check for song re entries
+             cur.execute("SELECT title FROM song, favorites WHERE song.songid = favorites.songid AND userid = %s",(userID,))
+             duplicate_check = cur.fetchall()
              
-             insert_song_toFavorites = "INSERT INTO Favorites (songid ,userid, listid) VALUES (%s,%s,%s)"
-             song = [(songFound, userID, '443')]
-             cur.executemany(insert_song_toFavorites,song)
-             con.commit()
+             #select the listid that corresponds to the current user signed on 
+             cur.execute("SELECT DISTINCT listid FROM favorites WHERE userid = %s",(userID,))
+             listID = cur.fetchall()
+             
+             #if current user does not have a favorites list then create a listid that corresponds to users music list
+             if not listID:
+                 no_listID = True
+                 random_num = random.randint(100,999)
+             else:
+                 listID = [i[0] for i in listID]
+                 print(listID)
+                 x = listID[0]
+                 print(x, "  x value")
+                 
+            #check if song exists in the favorites 
+             
+            
+             for i in duplicate_check:
+                  if i[0] == values[0]:
+                      found = False
+                      duplicate = True
+                      sg.Popup("Song already in Favorites!")
+             #if user does not exists give new listid 
+             if no_listID == True:
+                 insert_song_toFavorites = "INSERT INTO Favorites (songid ,userid, listid) VALUES (%s,%s,%s)"
+                 song = [(songFound, userID, random_num)]
+                 cur.executemany(insert_song_toFavorites,song)
+                 sg.Popup("Song Successfully Added!\n")
+                 con.commit()
+             #if user exists insert into respective favorites list
+             if duplicate == False and no_listID == False:
+                 insert_song_toFavorites = "INSERT INTO Favorites (songid ,userid, listid) VALUES (%s,%s,%s)"
+                 song = [(songFound, userID, x)]
+                 cur.executemany(insert_song_toFavorites,song)
+                 sg.Popup("Song Successfully Added!\n")
+                 con.commit()
         
+
+        if found == False:
+            sg.Popup("Failed to Add to List!\n")
         #display current list of songs in a popup 
-        if found == True:
+        """if found == True:
             sg.Popup("Current list")
-            cur.execute("SELECT title FROM song, favorites WHERE song.songid = favorites.songid")
+            cur.execute("SELECT title FROM song, favorites WHERE song.songid = favorites.songid AND userid = %s", (userID,))
             song_list = cur.fetchall()
             sg.Popup(song_list)
         else:
             sg.Popup("Failed to add to Favorites")
-            
+          """  
         if event == sg.WIN_CLOSED:
                 cur.close()
                 con.close()
