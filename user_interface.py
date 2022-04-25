@@ -442,6 +442,8 @@ def main():
         duplicate = False
        #when submit button is pressed look for the name of the song the user put in textbox
        #if it is found it will set bool to true which will trigger the next if statement
+        if event == "Remove ":
+            print(values[2])
         if event == "Submit":
             
             for i in song:
