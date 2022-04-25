@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
 Created on Mon Mar 14 13:51:45 2022
+Updated on Sun Apr 24 04:53:00 2022
 
-Written by Jake Kenny
+Written by Jake Kenny, Ryan Rademacher, Victor Ruiz, Kyle Wu
+
 """
 
 from tkinter.constants import INSERT
@@ -271,19 +273,46 @@ def create_create_account_window():
   
 #The music library UI is composed of the library and favorites tab
 #These two tabs are very similar; the only difference is that the table in favorites is a subset of the table in library
-def create_library_UI():
+def create_library_UI(username):
     """
     TODO:
         1. Format the tables to fit the screen
         2. Set the 'values' parameter equal to the SQL database
     """
+
+    #Taking data from database to put into application
+    #implement sorting system in library so user can sort by song, artist, album, releasedate, length, rating, genre
+    #by changing the libSort tag and having appropriate changes in sg.Table / libVal
+    libSort = "title"
+    if(libSort == "title"):
+        cur.execute("SELECT title, runtimeseconds, genres FROM song ORDER BY title ASC")
+    if(libSort == "genre"):
+        cur.execure("SELECT title, runtimeseconds, genres FROM song ORDER BY genres ASC")
+    libVal = cur.fetchall()
+
+    #implement favorite window to display current users favorites
+    favCheck = True
+    try:
+        cur.execute("SELECT title, runtimeseconds, genres " +
+            "FROM song, favorites, users WHERE song.songid = favorites.songid and " +
+            "favorites.userid = users.userid and users.username = \'" + username + "\' ORDER BY title ASC")
+    except:
+        print("no favorites for " + username)
+        favCheck = False
+
+    if(favCheck):
+        favVal = cur.fetchall()
+    else:
+        favVal = [[0, 0, 0]]
+
+    #adding data into application
     library_layout = [
         [sg.Text("Add song to Favorites: "), sg.InputText(), sg.Button("Submit")],
-        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        [sg.Table(values = libVal, headings = ['song', 'length', 'genre'])]
         ]
     favorites_layout = [
         [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Remove ")],
-        [sg.Table(values = [['0', '0']], headings = ['0', '1'])]
+        [sg.Table(values = favVal, headings = ['song', 'length', 'genre'])]
         ]
     tabgrp = [
         [sg.TabGroup([
@@ -400,7 +429,7 @@ def main():
         login_window.close()
         songFound =" "
         userID =" "
-        library_window = create_library_UI()
+        library_window = create_library_UI(user)
         event, values = library_window.read()
         #execute the sql statements to get title, songid, userid, and username from respective table
         cur.execute("SELECT title, songid FROM song")
