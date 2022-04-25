@@ -387,6 +387,7 @@ def create_account():
 
 def remove_from_favorites(value, user):
 
+    #operation = False
     #delete_song_toFavorites = "DELETE FROM FAVORITES WHERE songid = %s"
     #cur.executemany(delete_song_toFavorites,value)
     #con.commit()
@@ -421,14 +422,18 @@ def remove_from_favorites(value, user):
     cur.executemany(delete_song_toFavorites, song)
     con.commit()
 
-    return True       
+
+    if tmp != 0: #there's no duplicate here
+        return True
+
+    return False       
             
   
 
 def main():
     global con,cur
     
-    con = pg.connect(host="localhost", user="postgres", password="greyAnteater12", dbname="musicDB")
+    con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
     cur = con.cursor()
     con.autocommit= True
     login_window = create_login_window()
