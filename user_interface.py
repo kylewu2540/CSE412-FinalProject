@@ -465,6 +465,10 @@ def main():
          if event == sg.WIN_CLOSED:
              sys.exit()
 
+         try:
+            login_window.close()
+         except:
+            print("window not made yet (only happens on first entering sign_on == 0 loop)")
 
          login_window = create_login_window()
          event, values = login_window.read()
