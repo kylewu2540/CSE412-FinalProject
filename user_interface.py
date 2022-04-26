@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """
 Created on Mon Mar 14 13:51:45 2022
@@ -95,7 +96,7 @@ cur.execute(create_album)
 cur.execute(create_favorites)
 cur.execute(create_makes)
 cur.execute(create_song_album_relation)
-cur.execute(create_rating)
+
 """
 
 insert_userinfo_query= "INSERT INTO users (userid, fname, lname, username, userpass) VALUES (%s,%s, %s, %s, %s)"
@@ -189,7 +190,27 @@ insert_songrating_query = "INSERT INTO rating (avgrating, songid) VALUES (%s, %s
 ratingData = [('2','5010'),
               ('1','6732'),
               ('4','9222'),
-              ('5','6752')]
+              ('5','6752'),
+              ('0','7833'),
+              ('0','7246'),
+              ('0','9009'),
+              ('0','7393'),
+              ('0','9583'),
+              ('0','8014'),
+              ('0','9049'),
+              ('0','9616'),
+              ('0','9243'),
+              ('0','5363'),
+              ('0','6999'),
+              ('0','8421'),
+              ('0','9156'),
+              ('0','9296'),
+              ('0','5203'),
+              ('0','7480'),
+              ('0','6979'),
+              ('0','9810'),
+              ('0','9990'),
+              ('0','8121')]
 
 insert_userfavorites_query = "INSERT INTO favorites (songid, userid, listid) VALUES (%s,%s, %s)"
 favoritesData = [('5010', '14589652', '000453'),
@@ -214,7 +235,7 @@ cur.executemany(insert_artist_info_query, artistData)
 cur.executemany(insert_artistalbum_info_query, albumData)
 cur.executemany(insert_songinfo_query, data)
 cur.executemany(insert_userinfo_query, userData)
-cur.executemany(insert_songrating_query, ratingData)
+
 cur.executemany(insert_userfavorites_query, favoritesData)
 cur.executemany(insert_makesrelation_query, makesData)
 cur.executemany(insert_songalbum_query, songalbumData)
@@ -227,7 +248,41 @@ cur.executemany(insert_songalbum_query, songalbumData)
 
 #Temp login dictionary. Will be replaced with a SQL database
 accounts = {'Admin':'123456'}
+def rate_song(songName, rateValue):
 
+    cur.execute("SELECT title, songid FROM song")
+    song = cur.fetchall()
+    songFound = ""
+    found = False
+    
+    for i in song:
+
+        if i[0] == songName:
+            found = True
+            songFound = i[1]
+    
+    if found:
+
+        cur.execute("UPDATE rating SET avgrating =%s WHERE songid = %s",(rateValue, songFound))
+        con.commit()
+        sg.Popup("Song Successfully Rated !\n")
+    else:
+        sg.Popup("Song could not be found ")
+    
+    #print(favorites)
+    
+
+
+
+def create_rate_window():
+    rate_layout = [
+        [sg.Text("Which Song do you Want to Rate?"), sg.InputText()], 
+        [sg.Text("Rate 1-5 : "), sg.InputText()],
+        [sg.Button("Rate Song")]
+        
+        ]
+    rate_window = sg.Window("Rate Song ", rate_layout, margins = (100,50))
+    return rate_window
 
 def create_login_window():
     login_layout = [
@@ -261,45 +316,46 @@ def create_create_account_window():
   
 #The music library UI is composed of the library and favorites tab
 #These two tabs are very similar; the only difference is that the table in favorites is a subset of the table in library
-def create_library_UI(username):
-    """
-    TODO:
-        1. Format the tables to fit the screen
-        2. Set the 'values' parameter equal to the SQL database
-    """
+def create_library_UI(username, libSort, favSort):
+
     #Taking data from database to put into application
-    #implement sorting system in library so user can sort by song, artist, album, releasedate, length, rating, genre
+    #implement sorting system in library so user can sort by song, length, genre, artist, album, releasedate, rating
     #by changing the libSort tag and having appropriate changes in sg.Table / libVal
-    libSort = "title"
-    if(libSort == "title"):
-        cur.execute("SELECT title, runtimeseconds, genres FROM song ORDER BY title ASC")
-    if(libSort == "genre"):
-        cur.execure("SELECT title, runtimeseconds, genres FROM song ORDER BY genres ASC")
+    #Library window
+
+    cur.execute("SELECT song.title, song.runtimeseconds, song.genres, song.artistname, album.albumname, album.releaseyear, rating.avgrating" +
+               " FROM song LEFT JOIN albumsongrelation as albumrel on song.songid = albumrel.songid LEFT JOIN album on album.albumid = albumrel.albumid" +
+               " LEFT JOIN rating on song.songid = rating.songid ORDER BY " + libSort + " ASC")
     libVal = cur.fetchall()
 
-    #implement favorite window to display current users favorites
-    favCheck = True
-    try:
-        cur.execute("SELECT title, runtimeseconds, genres " +
-            "FROM song, favorites, users WHERE song.songid = favorites.songid and " +
-            "favorites.userid = users.userid and users.username = \'" + username + "\' ORDER BY title ASC")
-    except:
-        print("no favorites for " + username)
-        favCheck = False
+    #Favorite window to display current users favorites
+    #some tab commented code below is used if an error starts to occur from username not being recognized
+        #favCheck = True
+        #try:
+    cur.execute("SELECT song.title, song.runtimeseconds, song.genres, song.artistname, album.albumname, album.releaseyear, rating.avgrating" +
+                   " FROM song LEFT JOIN albumsongrelation as albumrel on song.songid = albumrel.songid LEFT JOIN album on album.albumid = albumrel.albumid" +
+                   " LEFT JOIN rating on song.songid = rating.songid LEFT JOIN favorites on song.songid = favorites.songid" +
+                   " LEFT JOIN users on favorites.userid = users.userid WHERE users.username = \'" + username + "\' ORDER BY " + favSort + " ASC")
+        #except:
+        #    print("favCheck = False")
+        #    favCheck = False
 
-    if(favCheck):
-        favVal = cur.fetchall()
-    else:
-        favVal = [[0, 0, 0]]
+        #if(favCheck):
+    favVal = cur.fetchall()
+        #else:
+        #    favVal = [[0, 0, 0, 0, 0, 0, 0]]
 
+    #libVal = [[0],[1],[2],[3],[4],[5],[6]]
     #adding data into application
     library_layout = [
-        [sg.Text("Add song to Favorites: "), sg.InputText(), sg.Button("Submit")],
-        [sg.Table(values = libVal, headings = ['Song List', 'Length', 'Genre'])]
+        [sg.Text("Add Song Name to Favorites: "), sg.InputText(), sg.Button("Submit")],
+        [sg.Text("Sort By: "), sg.Button("Song"), sg.Button("Length"), sg.Button("Genre"), sg.Button("Artist"), sg.Button("Album"), sg.Button("Year"), sg.Button("Rating"), sg.Button("Rate Song")],
+        [sg.Table(values = libVal, headings = ['Song', 'Length', 'Genre', 'Artist', 'Album', 'Year', 'Rating'])]
         ]
     favorites_layout = [
-        [sg.Text("Remove song from Favorites: "), sg.InputText(), sg.Button("Remove ")],
-        [sg.Table(values = favVal, headings = ['Song List', 'Length', 'Genre'])]
+        [sg.Text("Remove Song Name from Favorites: "), sg.InputText(), sg.Button("Remove ")],
+        [sg.Text("Sort By: "), sg.Button("Song"), sg.Button("Length"), sg.Button("Genre"), sg.Button("Artist"), sg.Button("Album"), sg.Button("Year"), sg.Button("Rating")],
+        [sg.Table(values = favVal, headings = ['Song', 'Length', 'Genre', 'Artist', 'Album', 'Year', 'Rating'])]
         ]
     tabgrp = [
         [sg.TabGroup([
@@ -364,12 +420,14 @@ def create_account():
         for i in users:
             if(values[0] == i[2]):
                 user = values[0]
-                print("Username exists!\n")
+                #print("Username exists!\n")
+                sg.Popup('Username already exists!')
                 exists = True
                 create_account_window.close()
                 main()
             elif random_num == i[0]:
-                print("Same ID exists!\n")
+                #print("Same ID exists!\n")
+                sg.Popup('Same ID already exists!')
                 exists = True
                 create_account_window.close()
                 main()
@@ -436,7 +494,7 @@ def remove_from_favorites(value, user):
     #print("we are here after the delete query")
 
     if operation == True: #there's no duplicate here
-        print("alright, we reached here")
+        #print("alright, we reached here")
         return True
 
     return False       
@@ -445,6 +503,7 @@ def remove_from_favorites(value, user):
 
 def main():
     global con,cur
+   
     operation = False
     con = pg.connect(host="localhost", user="postgres", password="412group", dbname="musicdb")
     cur = con.cursor()
@@ -453,13 +512,21 @@ def main():
     event, values = login_window.read()
    
     sign_on = login(values[0], values[1], login_window, event)
-    user = values[0]
-   
+    user = values[0] #variable used for create_library_UI favorites
+    libSort = "title" #variable used for create_library_UI sorting
+    favSort = "title" #variable used for create_library_UI sorting
+    rateValue = 0
+    #cur.execute(create_rating)
+    #cur.executemany(insert_songrating_query, ratingData)
     #stay on main screen when login fails 
     while sign_on == 0:
          if event == sg.WIN_CLOSED:
              sys.exit()
 
+         try:
+            login_window.close()
+         except:
+            print("window not made yet (only happens on first entering sign_on == 0 loop)")
 
          login_window = create_login_window()
          event, values = login_window.read()
@@ -471,8 +538,82 @@ def main():
         songFound =" "
         userID =" "
         random_num = 0
-        library_window = create_library_UI(user)
+        try:
+            library_window.close()
+        except:
+            print("window not made yet (only happens on first entering sign_on == 1 loop)")
+
+        library_window = create_library_UI(user, libSort, favSort,) #create display and sort
         event, values = library_window.read()
+
+        #listen for events of library_window.read():
+
+        #very useful print values to understand what is going on in the sign_on == 1 loop
+        #print(event)
+        #print(values)
+
+        #exit event
+        if event == sg.WIN_CLOSED:
+            cur.close()
+            con.close()
+            sys.exit()
+
+        #change sorting of library window based on button press for create_library_UI
+        changeSort = False
+        if event == "Song":
+            libSort = "title"
+            changeSort = True
+        if event == "Length":
+            libSort = "runtimeseconds"
+            changeSort = True
+        if event == "Genre":
+            libSort = "genres"
+            changeSort = True
+        if event == "Artist":
+            libSort = "artistname"
+            changeSort = True
+        if event == "Album":
+            libSort = "albumname"
+            changeSort = True
+        if event == "Year":
+            libSort = "releaseyear"
+            changeSort = True
+        if event == "Rating":
+            libSort = "avgrating"
+            changeSort = True
+
+        if event == "Song0":
+            favSort = "title"
+            changeSort = True
+        if event == "Length1":
+            favSort = "runtimeseconds"
+            changeSort = True
+        if event == "Genre2":
+            favSort = "genres"
+            changeSort = True
+        if event == "Artist3":
+            favSort = "artistname"
+            changeSort = True
+        if event == "Album4":
+            favSort = "albumname"
+            changeSort = True
+        if event == "Year5":
+            favSort = "releaseyear"
+            changeSort = True
+        if event == "Rating6":
+            favSort = "avgrating"
+            changeSort = True
+        if event == "Rate Song":
+            rate_window = create_rate_window()
+            event, values = rate_window.read()
+            print(values[0],  values[1])
+            if int(values[1]) > 5 or int(values[1]) < 0:
+                sg.Popup("Invalid Rate Value")
+            else:
+
+                rate_song(values[0],values[1])
+                rate_window.close()
+
         #execute the sql statements to get title, songid, userid, and username from respective table
         cur.execute("SELECT title, songid FROM song")
         song = cur.fetchall()
@@ -504,14 +645,12 @@ def main():
                 sg.Popup("Error! Removal could not be done because the song does not exist as the user favorite's!")
             """
         # we know whether we have removed the song based off the operation return value
-        if operation == True:
+        if operation == True and event == "Remove":
             sg.Popup("Removal of song is sucessful!")
-        elif operation == False:
+        if operation == False and event == "Remove":
             sg.Popup("Error! Removal could not be done because the song does not exist as the user favorite's!")
-       #when submit button is pressed look for the name of the song the user put in textbox
-       #if it is found it will set bool to true which will trigger the next if statement
-        if event == "Remove ":
-            print(values[2])
+        #when submit button is pressed look for the name of the song the user put in textbox
+        #if it is found it will set bool to true which will trigger the next if statement
         if event == "Submit":
             
             for i in song:
@@ -520,8 +659,8 @@ def main():
                     songFound = i[1]
                     #sg.Popup(i[0])
       
-       #if the song is in the database find the userid of the user thats currently signed in 
-       #once user is found insert the song that was chosen into the favorites table
+        #if the song is in the database find the userid of the user thats currently signed in 
+        #once user is found insert the song that was chosen into the favorites table
         if found == True:
             
              #search for userid that matches current signed on user
@@ -569,9 +708,9 @@ def main():
                  cur.executemany(insert_song_toFavorites,song)
                  sg.Popup("Song Successfully Added!\n")
                  con.commit()
-        
 
-        if found == False:
+        
+        if found == False and event == "Submit":
             sg.Popup("Failed to Add to List!\n") 
 
         """
@@ -591,10 +730,11 @@ def main():
         else:
             sg.Popup("Failed to add to Favorites")
           """  
-        if event == sg.WIN_CLOSED:
-                cur.close()
-                con.close()
-                sys.exit()
+        #moved to beginning, could be placed at beginning or end
+        #if event == sg.WIN_CLOSED:
+        #        cur.close()
+        #        con.close()
+        #        sys.exit()
 
 
 
@@ -625,4 +765,5 @@ def main():
              sys.exit()
    """    
         
+
 main()
